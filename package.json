@@ -12,8 +12,10 @@
     "lint": "eslint --ext .js,.vue src test/unit/specs"
   },
   "dependencies": {
+    "co": "^4.6.0",
     "express-mysql-connection": "^1.0.0",
     "iview": "^2.0.0-rc.9",
+    "moment": "^2.18.1",
     "node-mysql": "^0.4.2",
     "vue": "^2.2.2",
     "vue-resource": "^1.3.1",
