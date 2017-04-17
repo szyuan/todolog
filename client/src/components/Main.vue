@@ -7,7 +7,7 @@
                         <Button type="text" size="large" shape="circle" icon="plus-round"></Button>
                 </Col>
                 <Col span="22">
-                        <Input type="text" size="large" placeholder="新增事项"></Input>
+                        <Input v-model="newTodo.title" @on-enter="addNewTodo" type="text" size="large" placeholder="新增事项"></Input>
                 </Col>
             </Row>
         </div>
@@ -54,12 +54,60 @@ export default {
     return {
         todos: [],
         tags: [],
-        newTodo: {title:"",type: ""}
+        newTodo: {id:null, title:"",tagID: 0}
     };
   },
   computed: {
       gotTodos: function() {
           return Boolean(this.todos.length);
+      }
+  },
+  methods: {
+      todoValidate(todo) {
+        let title = todo.title;
+        if(title) {
+            if(typeof title === 'string') {
+                if(title.trim().length > 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
+      },
+      // 添加新todo操作
+      addNewTodo() {
+        var _this = this;
+        // 验证数据合法性
+        if(this.todoValidate(this.newTodo)){
+            // 先进行post请求
+            this.$http.put('/api/todos', {"newTodo": this.newTodo}).then((res) => {
+                if(res.ok) {
+                    // put后返回成功插入后的数据ID，将数据推入当前的todo数据数组
+                    let todoID = res.body.id;
+                    _this.addTodoDOM(todoID,_this.newTodo);
+                }else {
+                    console.log('新增todo失败');
+                }
+            });
+        }else {
+            // console.log()
+        }
+      },
+      addTodoDOM(todoID,newTodo) {
+        let newTodoData = {};
+        newTodoData.title = newTodo.title;
+        newTodoData.tagname = this.getNameByTagID(newTodo.tagID);
+        newTodoData.id = todoID;
+        this.todos.unshift(newTodoData);
+      },
+      getNameByTagID(tagID) {
+        let result = this.tags.filter((item, index, arr) => {
+            if(item.id === tagID) {
+                return true;
+            }
+        })[0].name;
+        console.log(result);
+        return result;
       }
   },
   created: function() {
@@ -91,7 +139,7 @@ export default {
 </script>
 
 <style lang="scss">
-    @import '../common/scss/var.scss';
+    @import '../common/scss/index.scss';
 
     #main {
         margin: 1rem;

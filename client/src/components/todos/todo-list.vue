@@ -1,6 +1,6 @@
 <template>
-<div id="todo-list">
-    <todo-item v-for="todo in activeTodos" :key="todo.id" :todo="todo"></todo-item>
+<div class="todo-list">
+    <todo-item v-for="todo in activeTodos()" :key="todo.id" :todo="todo"></todo-item>
 </div>
 </template>
 
@@ -9,10 +9,9 @@ import todoItem from '@comp/todos/todo-item'
 
 export default {
     computed: {
-        activeTodos: function() {
-            return this.todos.filter((item,index,arr) => {
-                return !item.done;
-            });
+    },
+    data() {
+        return {
         }
     },
     props: {
@@ -20,7 +19,11 @@ export default {
             type: Array,
             required: true
         }
-        // todos: null
+    },
+    methods: {
+        activeTodos: function() {
+            return this.todos.filter((item,index,arr) => { return true; });
+        }
     },
     components: {
         todoItem
@@ -29,7 +32,7 @@ export default {
 </script>
 
 <style>
-#todo-list {
+.todo-list {
     // background: yellow;
     // border: 1px solid #ddd;
     // margin: 1rem 0;

@@ -1,7 +1,7 @@
 <template>
-<div class="todo-item" :class="{ editing: editing, chosen: chosen}">
+<div class="todo-item" :class="{ editing: editing, chosen: chosen, done: todoDone}">
     <div class="checkbox">
-        <Checkbox v-model="todo.done"></Checkbox>
+        <Checkbox @on-change="toggleCheck" v-model="todoDone"></Checkbox>
     </div>
     <div class="title" @dblclick="edit">
         <div v-show="!editing" class="title-content">
@@ -10,7 +10,7 @@
         <Input v-focus class="edit-input" @on-enter="saveChange" @on-blur="saveChange" v-if="editing" v-model="todo.title" type="text" size="large" placeholder="新增事项"></Input>
     </div>
     <div class="tag">
-        <Tag>{{todo.type}}</Tag>
+        <Tag>{{todo.tagname}}</Tag>
     </div>
     <div class="delete">
         <Button v-on:click="test" type="text" size="small" shape="circle" icon="backspace-outline"></Button>
@@ -29,7 +29,12 @@ export default {
     data() {
         return {
             editing: false,
-            chosen: false
+            chosen: false,
+        };
+    },
+    computed: {
+        todoDone: function() {
+            return Boolean(this.todo.done);
         }
     },
     methods: {
@@ -41,6 +46,13 @@ export default {
         },
         test() {
             alert();
+        },
+        toggleCheck() {
+            if(this.todo.done === 1) {
+                this.todo.done = 0;
+            }else {
+                this.todo.done = 1;
+            }
         }
     }
 }
@@ -59,6 +71,12 @@ export default {
     &:hover {
         .delete {
             display: block;
+        }
+    }
+    &.done {
+        .title h2 {
+            text-decoration: line-through;
+            color: #ccc;
         }
     }
 }
@@ -86,6 +104,11 @@ export default {
         overflow: hidden;
         margin: 0.8rem 0;
         box-sizing: border-box;
+        
+        h2 {
+            font-weight: 400;
+            transition: 0.5s color;
+        }
     }
     .edit-input {
         margin-top: 11px;

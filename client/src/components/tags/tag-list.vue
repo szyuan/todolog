@@ -1,15 +1,10 @@
 <template>
 <div class="tag-list" >
-    <!--ul>
-        <li v-for="tag in tags" >
-            {{tag.name}}
-        </li>
-    </ul-->
-    <Radio-group v-model="newTodo.type" size="large" type="button" class="tag-radio-group">
+    <Radio-group v-model="newTodo.tagID" size="large" type="button" class="tag-radio-group">
         <Row class="tag-radio-row">
             <Col span="8" v-for="tag in tags" :key="tag.key" class="tag-radio-col">
                 <div class="tag-radio">
-                    <Radio :label="tag.name" :key="tag.id"></Radio>
+                    <Radio :label="tag.id" :key="tag.id">{{tag.name}}</Radio>
                 </div>
             </Col>
         </Row>
@@ -22,12 +17,14 @@ export default {
     props: {
         tags: {
             type: Array,
-            default: [1,2,3]
+            default: []
         },
         newTodo: {
             type: Object,
             default: {}
         }
+    },
+    computed: {
     },
     data() {
         return {
