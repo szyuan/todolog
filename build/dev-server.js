@@ -29,17 +29,17 @@ var app = express()
 
 
 // ******* 模拟后台
-var mockData = require('../mock-data.json');
-var todos = mockData.todos;
-var tags = mockData.tags;
-var apiRouter = express.Router();
-apiRouter.get('/todos/',function(req,res,next){
-  res.json(todos);
-});
-apiRouter.get('/tags/',function(req,res,next){
-  res.json(tags);
-});
-app.use('/api',apiRouter);
+// var mockData = require('../mock-data.json');
+// var todos = mockData.todos;
+// var tags = mockData.tags;
+// var apiRouter = express.Router();
+// apiRouter.get('/todos/',function(req,res,next){
+//   res.json(todos);
+// });
+// apiRouter.get('/tags/',function(req,res,next){
+//   res.json(tags);
+// });
+// app.use('/api',apiRouter);
 // ******* 模拟后台
 
 
