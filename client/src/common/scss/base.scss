@@ -1,2 +1,33 @@
 body {
+    // background: red !important;
+}
+
+
+// 定制iview组件
+.todo-list {
+    // 多选框
+    .ivu-checkbox{
+        .ivu-checkbox-inner {
+            padding: 14px;
+            border-radius: 50%;
+
+            &:after {
+                top: 0;
+                bottom: 4px;
+                left: 0;
+                right: 0;
+                margin: auto;
+                border-width: 1px;
+                transform: rotate(45deg) scale(2);
+            }
+            @at-root .ivu-checkbox.ivu-checkbox-checked .ivu-checkbox-inner{
+                border-color: #8cbced;
+                background-color: #fff;
+                &:after {
+                    border-color: #8cbced;
+                    background-color: #fff;
+                }
+            }
+        }
+    }
 }
