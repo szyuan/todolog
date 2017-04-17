@@ -33,8 +33,8 @@
         </div>
 
         <Row>
-            <div class="history-wrapper">
-                <!-- history-list></history-list -->
+            <div class="done-list-wrapper">
+                <done-list :todos="todos"></done-list>
             </div>
         </Row>
     </div>
@@ -43,6 +43,7 @@
 
 <script>
 import todoList from '@comp/todos/todo-list';
+import doneList from '@comp/todos/done-list';
 import TagList from '@comp/tags/tag-list';
 import timer from '@comp/timer/timer.vue';
 
@@ -133,7 +134,8 @@ export default {
   components: {
     todoList,
     TagList,
-    Timer: timer
+    Timer: timer,
+    doneList
   }
 }
 </script>

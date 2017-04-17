@@ -13,8 +13,15 @@
         <Tag>{{todo.tagname}}</Tag>
     </div>
     <div class="delete">
-        <Button v-on:click="test" type="text" size="small" shape="circle" icon="backspace-outline"></Button>
+        <Button v-on:click="showConfirm = true" type="text" size="small" shape="circle" icon="backspace-outline"></Button>
     </div>
+
+    <Modal
+        v-model="showConfirm"
+        title="确认删除这个事项？"
+        @on-ok="deleteTodo">
+        <p>删除了就没法恢复了哦...</p>
+    </Modal>
 </div>
 </template>
 
@@ -24,12 +31,14 @@ export default {
         todo: {
             type: Object,
             default: {}
-        }
+        },
+        index: Number
     },
     data() {
         return {
             editing: false,
             chosen: false,
+            showConfirm: false
         };
     },
     computed: {
@@ -44,8 +53,10 @@ export default {
         saveChange() {
             this.editing = false;
         },
-        test() {
-            alert();
+        deleteTodo() {
+            let _this = this;
+            // alert(_this.index);
+            this.$emit('delete', {id:_this.todo.id, index:_this.index});
         },
         toggleCheck() {
             if(this.todo.done === 1) {

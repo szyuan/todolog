@@ -1,6 +1,6 @@
 <template>
 <div class="todo-list">
-    <todo-item @delete="deleteTodo" v-for="(todo, index) in activeTodos()" :key="todo.id" :todo="todo" :index="index"></todo-item>
+    <todo-item @delete="deleteTodo" v-for="(todo, index) in doneTodos()" :key="todo.id" :todo="todo" :index="index"></todo-item>
 </div>
 </template>
 
@@ -21,8 +21,8 @@ export default {
         }
     },
     methods: {
-        activeTodos: function() {
-            return this.todos.filter((item,index,arr) => { return item.done==0; });
+        doneTodos: function() {
+            return this.todos.filter((item,index,arr) => { return item.done==1; });
         },
         deleteTodo: function(todoInfo) {
             var _this = this;
