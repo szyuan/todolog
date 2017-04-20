@@ -38,6 +38,10 @@ function todosAttr(req, res) {
             todoDone(req,res);
             break;
         };
+        case 'undo': {
+            todoUndo(req,res);
+            break;
+        };
         default :{
             res.status(501).json({msg:"修改属性不合法"});
             break;
@@ -57,7 +61,7 @@ function tags(req, res) {
 // @ 设置todo.title
 function setTitle(req,res) {
     var todoID = req.body.todoID;
-    var userID = req.body.userID;
+    var userID = req.body.userID||1;
     var destTitle = req.body.title;
     var sql = '';
     var args = [];
@@ -70,7 +74,7 @@ function setTitle(req,res) {
         co(function* () {
             var conn = yield getConn(req);
             var result = yield sqlQuery(conn, sql, args);
-            console.log(result);
+            // console.log(result);
             // 没有匹配的记录受到影响：userID与todoID不匹配
             if(result.affectedRows<1) {
                 throw {update:"fail", stack:'没有找到匹配的记录，或者你没有操作这条记录的权限。'};
@@ -93,7 +97,7 @@ function todoStart(req, res) {
     *  2.设置start_time为当前时间.
     */
     var todoID = req.body.todoID;
-    var userID = req.body.userID;
+    var userID = req.body.userID||1;
     var sql = '';
     var args = [];
     if(v_ID(todoID)&&v_ID(userID)) {
@@ -106,7 +110,7 @@ function todoStart(req, res) {
         co(function* () {
             var conn = yield getConn(req);
             var result = yield sqlQuery(conn, sql, args);
-            console.log(result);
+            
             // 没有匹配的记录受到影响：userID与todoID不匹配
             if(result.affectedRows<1) {
                 throw {update:"fail", stack:'没有找到匹配的记录，或者你没有操作这条记录的权限。'};
@@ -127,7 +131,7 @@ function todoPause(req, res, callback) {
     *  2.更新elapsed_ms（累加当前与start_time的时间差）。
     */
     var todoID = req.body.todoID;
-    var userID = req.body.userID;
+    var userID = req.body.userID||1;
     var sql_elapsed = '';
     var args_elapsed = [];
     var sql = '';
@@ -153,7 +157,7 @@ function todoPause(req, res, callback) {
                 if(status === 0) {
                     // 已经停止过，不再累加elapsed_time
                     elapsedAdd = 0;
-                    res.json({update:"success", updateID: todoID, msg:'todo已经是暂停状态'});
+                    res.json({update:"success", updateID: todoID, msg:'todo已经是暂停状态', elapsed_ms: elapsedMS});
                 }else {
                     var startTimeMS = Date.parse(startTime);
                     
@@ -173,7 +177,7 @@ function todoPause(req, res, callback) {
                     var updateResult = yield sqlQuery(conn, sql, args);
                     
                     if(updateResult.affectedRows > 0) {
-                        res.json({update:"success", updateID: todoID, msg:'todo暂停成功'});
+                        res.json({update:"success", updateID: todoID, msg:'todo暂停成功', elapsed_ms: elapsedMS});
                     }else {
                         throw {update:"fail", stack:'没有找到匹配的记录，或者你没有操作这条记录的权限。设置status，elapsed记录失败'}    
                     }
@@ -197,7 +201,7 @@ function todoDone(req,res) {
     *   3.设置finish_time字段为当前时间(done原本不为1的情况下)； 
     */
     var todoID = req.body.todoID;
-    var userID = req.body.userID;
+    var userID = req.body.userID||1;
     
     if(v_ID(userID)&&v_ID(todoID)) {
         // 先获取原本的status,done,elapesd_ms
@@ -232,14 +236,50 @@ function todoDone(req,res) {
                             " AND user_id = ?";
                 var args2 = [elapsedMS,parseInt(todoID), parseInt(userID)]
                 if(status === 1){
-                    // 若status并未停止，则累加elapsed_ms
-                    var nowMS = Date.now();
-                    elapsedAdd = nowMS - Date.parse(startTime);
-                    args2[0] = elapsedMS+elapsedAdd;
+                    if(startTime){
+                        // 若status并未停止，则累加elapsed_ms
+                        var nowMS = Date.now();
+                        elapsedAdd = nowMS - Date.parse(startTime);
+                        args2[0] = elapsedMS+elapsedAdd;
+                    }else {
+                        args2[0] = 0;
+                    }
                 }
                 var updateResult = yield sqlQuery(conn, sql2, args2);
                 res.json({update:"success", updateID: todoID, msg: "done成功"});
             }
+        }).catch((err) => {
+            res.status(501).send(err.stack);
+        });
+    }else {
+        res.status(501).json({update:"fail", msg:'参数不合法'})
+    }
+}
+
+// @ 取消完成todo —— 
+function todoUndo(req,res) {
+    /* 
+    *   1.修改done字段为0； 
+    */
+    var todoID = req.body.todoID;
+    var userID = req.body.userID||1;
+    
+    if(v_ID(userID)&&v_ID(todoID)) {
+        // 先获取原本的status,done,elapesd_ms
+        var sql =  " UPDATE todos SET"+
+                    " done = 0"+
+                    " WHERE id = ?"+
+                    " AND user_id = ?";
+        var args = [parseInt(todoID), parseInt(userID)];
+
+        co(function* () {
+            var conn = yield getConn(req);
+            var result = yield sqlQuery(conn, sql, args);
+            // select 结果处理
+            if(result.affectedRows<1) {
+                throw {delete:"fail", stack:'没有找到匹配的记录，或者你没有操作这条记录的权限。'};
+            }
+            res.json({update:"success", updateID: todoID, msg: "undo成功"});
         }).catch((err) => {
             res.status(501).send(err.stack);
         });

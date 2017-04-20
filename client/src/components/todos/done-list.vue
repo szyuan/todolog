@@ -1,5 +1,5 @@
 <template>
-<div class="todo-list">
+<div class="done-list">
     <todo-item @delete="deleteTodo" v-for="(todo, index) in doneTodos()" :key="todo.id" :todo="todo" :index="index"></todo-item>
 </div>
 </template>
@@ -39,18 +39,12 @@ export default {
         todoItem
     },
     events: {
-        'todoItem.delete'(todoInfo) {
-            alert(todoInfo.index)
-        }
     }
 }
 </script>
 
-<style>
-.todo-list {
-    // background: yellow;
-    // border: 1px solid #ddd;
-    // margin: 1rem 0;
+<style lang="scss">
+.done-list {
     border-bottom: 0;
 }
 </style>

@@ -29,5 +29,12 @@ body {
                 }
             }
         }
+
+        &:hover .ivu-checkbox-inner:after {
+            border-color:orangered;
+        }
+    }
+    .ivu-poptip-confirm .ivu-poptip-body {
+        text-align: left;
     }
 }

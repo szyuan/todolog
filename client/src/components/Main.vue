@@ -16,7 +16,7 @@
             <Row :gutter="16">
                 <Col span="14">
                     <div class="todo-list-wrapper">
-                        <todo-list :todos="todos" :new-todo="newTodo"></todo-list>
+                        <todo-list @selectTodo="selectTodoHandler" :todos="todos" :new-todo="newTodo"></todo-list>
                     </div>
                 </Col>
                 <Col span="10">
@@ -25,7 +25,7 @@
                             <Tag-list :tags="tags" :new-todo="newTodo"></Tag-list>
                         </div>
                         <div class="timer-wrapper">
-                            <Timer></Timer>
+                            <Timer :todo="timerTodo" @statusChange="timerStatusChange"></Timer>
                         </div>
                     </div>
                 </Col>
@@ -34,7 +34,7 @@
 
         <Row>
             <div class="done-list-wrapper">
-                <done-list :todos="todos"></done-list>
+                <done-list :todos="todos" ></done-list>
             </div>
         </Row>
     </div>
@@ -55,7 +55,11 @@ export default {
     return {
         todos: [],
         tags: [],
-        newTodo: {id:null, title:"",tagID: 0}
+        newTodo: {id:null, title:"",tagID: 0, done: 0},
+        selectedTodo: null,
+        timerStatus: 3,
+				timerTodo: null,
+				timerTodoInited: false
     };
   },
   computed: {
@@ -63,7 +67,28 @@ export default {
           return Boolean(this.todos.length);
       }
   },
+	watch: {
+		// 监听todos变化，初始化timerTodo
+		todos() {
+			// 只运行一次
+			if(!this.timerTodoInited){
+				this.timerTodoInited = true;
+				let tickingTodo = this.todos.filter((item) => {
+					return (item.status === 1);
+				});
+				if(tickingTodo.length > 0){
+					this.timerTodo = tickingTodo[0];
+					this.timerStatus = 1;
+				}else {
+					this.timerTodo = null;
+				}
+			}else{console.log('todos changed')}
+		}
+	},
   methods: {
+			test() {
+				alert();
+			},
       todoValidate(todo) {
         let title = todo.title;
         if(title) {
@@ -86,6 +111,8 @@ export default {
                     // put后返回成功插入后的数据ID，将数据推入当前的todo数据数组
                     let todoID = res.body.id;
                     _this.addTodoDOM(todoID,_this.newTodo);
+                    console.log('新增todo成功');
+                    _this.resetTodo();
                 }else {
                     console.log('新增todo失败');
                 }
@@ -97,6 +124,7 @@ export default {
       addTodoDOM(todoID,newTodo) {
         let newTodoData = {};
         newTodoData.title = newTodo.title;
+        newTodoData.done = newTodo.done;
         newTodoData.tagname = this.getNameByTagID(newTodo.tagID);
         newTodoData.id = todoID;
         this.todos.unshift(newTodoData);
@@ -109,7 +137,23 @@ export default {
         })[0].name;
         console.log(result);
         return result;
-      }
+      },
+      resetTodo() {
+          this.newTodo = {id: null, title: "",tagID: 0, done: 0};
+      },
+      selectTodoHandler(arg) {
+        let todo = arg.todo;
+        this.selectedTodo = todo;
+				// 如果timer的状态为3，则代表无数据，可以更改timer的todo
+        if(this.timerStatus === 3) {
+            // 更换timerTodo
+						this.timerTodo = todo;
+        }
+      },
+			timerStatusChange(status) {
+				this.timerStatus = status;
+				console.log('main.timerstatus: '+this.timerStatus);
+			}
   },
   created: function() {
     // 请求todos数据
@@ -168,6 +212,10 @@ export default {
             box-shadow: $boxShadow;
             overflow: auto;
             // background: yellow;
+
+            .todo-list-content {
+                min-height: 22rem;
+            }
         }
 
         .control-wrapper {
@@ -182,5 +230,10 @@ export default {
                 text-align: center;
             }
         }
+    }
+
+    .done-list-wrapper {
+        box-shadow: $boxShadow;
+        padding: 1rem;
     }
 </style>

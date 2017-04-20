@@ -8,7 +8,7 @@ var sqlQuery = util.sqlQuery;
 function todos(req, res) {
     var result = [];
     var userID = 1;
-    var sql =   ' SELECT todos.id, title, tags.name as tagname, done, start_time, finish_time, elapsed_ms'+
+    var sql =   ' SELECT todos.id, title, tags.name as tagname, status, done, start_time, finish_time, elapsed_ms'+
                 ' FROM `todos`, `tags`'+
                 ' WHERE user_id = '+userID+
                 ' AND todos.tag_id = tags.id'+

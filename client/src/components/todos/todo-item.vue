@@ -3,7 +3,7 @@
     <div class="checkbox">
         <Checkbox @on-change="toggleCheck" v-model="todoDone"></Checkbox>
     </div>
-    <div class="title" @dblclick="edit">
+    <div class="title" @dblclick="edit" @click="selectTodo">
         <div v-show="!editing" class="title-content">
             <h2>{{todo.title}}</h2>
         </div>
@@ -13,19 +13,20 @@
         <Tag>{{todo.tagname}}</Tag>
     </div>
     <div class="delete">
-        <Button v-on:click="showConfirm = true" type="text" size="small" shape="circle" icon="backspace-outline"></Button>
+        <Poptip
+            confirm
+            title="确认删除吗？"
+            placement="left"
+            @on-ok="deleteTodo">
+            <Button class="delete-btn"  type="text" size="small" shape="circle" icon="backspace-outline"></Button>
+        </Poptip>
     </div>
-
-    <Modal
-        v-model="showConfirm"
-        title="确认删除这个事项？"
-        @on-ok="deleteTodo">
-        <p>删除了就没法恢复了哦...</p>
-    </Modal>
 </div>
 </template>
 
 <script>
+import bus from '../../common/event-bus';
+
 export default {
     props: {
         todo: {
@@ -58,11 +59,27 @@ export default {
             // alert(_this.index);
             this.$emit('delete', {id:_this.todo.id, index:_this.index});
         },
+        selectTodo() {
+            this.$emit('selected', {el:this.$el, todo:this.todo});
+        },
         toggleCheck() {
-            if(this.todo.done === 1) {
-                this.todo.done = 0;
+            let _this = this;
+            let postArgs = {
+                todoID:this.todo.id,
+                userID:1
+            };
+            if(this.todo.done === 0) {
+                this.$http.post('/api/todos/done',postArgs).then((res) => {
+                    if(res.ok) {
+                        _this.todo.done = 1;
+                    }
+                });
             }else {
-                this.todo.done = 1;
+                this.$http.post('/api/todos/undo',postArgs).then((res) => {
+                    if(res.ok) {
+                        _this.todo.done = 0;
+                    }
+                });
             }
         }
     }
@@ -75,19 +92,22 @@ export default {
     border-bottom: 1px solid #ddd;
     min-height: 3.5rem;
 
+    // &.done {
+    //     .title h2 {
+    //         text-decoration: line-through;
+    //         color: #ccc;
+    //     }
+    // }
+
     &.editing {
         background: #f9f9f9;
     }
 
     &:hover {
         .delete {
-            display: block;
-        }
-    }
-    &.done {
-        .title h2 {
-            text-decoration: line-through;
-            color: #ccc;
+            .delete-btn{
+                opacity: 1;
+            }
         }
     }
 }
@@ -130,9 +150,12 @@ export default {
     // background: orange;
 }
 .delete {
-    display: none;
     right: 0.5rem;
     width: 30px;
+    .delete-btn {
+        opacity: 0;
+        transition: all .3s;
+    }
     // background: firebrick;
 }
 </style>

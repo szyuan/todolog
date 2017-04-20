@@ -1,6 +1,8 @@
 <template>
 <div class="todo-list">
-    <todo-item @delete="deleteTodo" v-for="(todo, index) in activeTodos()" :key="todo.id" :todo="todo" :index="index"></todo-item>
+    <div @click.self="cleanSelect" class="todo-list-content">
+        <todo-item @selected="selectTodo" @delete="deleteTodo" v-for="(todo, index) in activeTodos" :key="todo.id" :todo="todo" :index="index"></todo-item>
+    </div>
 </div>
 </template>
 
@@ -8,23 +10,32 @@
 import todoItem from '@comp/todos/todo-item'
 
 export default {
-    computed: {
-    },
-    data() {
-        return {
-        }
-    },
     props: {
         todos: {
             type: Array,
             required: true
         }
     },
-    methods: {
-        activeTodos: function() {
-            return this.todos.filter((item,index,arr) => { return item.done==0; });
+    computed: {
+        todosData() {
+            return this.todos;
         },
-        deleteTodo: function(todoInfo) {
+        activeTodos() {
+            let todos = this.todos;
+            let activeTodos = todos.filter((item, index, arr) => { 
+                return Boolean(item.done === 0);
+            });
+            return activeTodos;
+        }
+    },
+    data() {
+        return {
+            listType: "todo-list",
+            lastSeletedItem: null
+        }
+    },
+    methods: {
+        deleteTodo(todoInfo) {
             var _this = this;
             var id = todoInfo.id;
             var index = todoInfo.index;
@@ -33,24 +44,36 @@ export default {
                     _this.todos.splice(index,1);
                 }
             });
+        },
+        selectTodo(arg) {
+            var el = arg.el;
+            this.lastSeletedItem&&this.lastSeletedItem.classList.remove('selected');
+            el.classList.add('selected');
+            this.lastSeletedItem = el;
+
+            this.$emit('selectTodo',arg);
+        },
+        cleanSelect() {
+            this.$el.querySelectorAll('.todo-item').forEach((item)=>{
+                item.classList.remove('selected');
+            });
         }
     },
     components: {
         todoItem
     },
-    events: {
-        'todoItem.delete'(todoInfo) {
-            alert(todoInfo.index)
-        }
+    created() {
+
     }
 }
 </script>
 
-<style>
+<style lang="scss">
 .todo-list {
-    // background: yellow;
-    // border: 1px solid #ddd;
-    // margin: 1rem 0;
     border-bottom: 0;
+
+    .todo-item.selected {
+        background: #fcfcfc;
+    }
 }
 </style>
