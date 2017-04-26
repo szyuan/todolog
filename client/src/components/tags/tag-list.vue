@@ -1,6 +1,6 @@
 <template>
 <div class="tag-list" >
-    <Radio-group v-model="newTodo.tagID" size="large" type="button" class="tag-radio-group">
+    <Radio-group @on-change="radioChange" v-model="newTodo.tagID" size="large" type="button" class="tag-radio-group">
         <Row class="tag-radio-row">
             <Col span="8" v-for="tag in tags" :key="tag.key" class="tag-radio-col">
                 <div class="tag-radio">
@@ -32,7 +32,9 @@ export default {
         }
     },
     methods: {
-
+        radioChange(val) {
+            this.$emit('radioChange',this.tags[val]);
+        }
     }
 }
 </script>

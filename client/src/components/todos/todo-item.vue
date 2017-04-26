@@ -117,7 +117,7 @@ export default {
     top: 0;
     bottom: 0;
     width: 60px;
-    height: 30px;
+    height: 1.8rem;
     margin: auto 0;
     line-height: 30px;
     text-align: center;
@@ -130,10 +130,11 @@ export default {
     overflow: hidden;
     box-sizing: border-box;
     margin: 0 100px 0 50px;
+    height: 100%;
     
     .title-content {
         overflow: hidden;
-        margin: 0.8rem 0;
+        margin: 1rem 0;
         box-sizing: border-box;
         
         h2 {

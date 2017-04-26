@@ -1,14 +1,20 @@
-body {
-    // background: red !important;
+
+// 定制iview组件
+
+#main {
+    // Input 输入框 large
+    .ivu-input.ivu-input-large {
+        height: 3rem;
+        font-size: 1.4rem;
+    }
 }
 
 
-// 定制iview组件
 .todo-list {
     // 多选框
     .ivu-checkbox{
         .ivu-checkbox-inner {
-            padding: 14px;
+            padding: 0.8rem;
             border-radius: 50%;
 
             &:after {

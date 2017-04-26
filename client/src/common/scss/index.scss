@@ -1,3 +1,55 @@
 @import "./var";
 @import "./base";
 
+html,body {
+    // background: red !important;
+    font-size: 20px;
+}
+
+@media all and (max-width: 768px) {
+
+    html,body {
+        font-size: 16px;
+    }
+    #main {
+        margin: 0 !important;
+        .new-todo-wrapper {
+            // border: 1px solid #ddd;
+            box-shadow: $boxShadowLight;
+            padding: 1rem;
+        }
+        .todos-ctrl-wrapper {
+            .todo-list-wrapper {
+                box-shadow: $boxShadowLight;
+                height: auto;
+                min-height: 10rem;
+            }
+            .control-wrapper {
+                box-shadow: $boxShadowLight;
+                height: auto;
+            }
+        }
+    }
+    
+}
+
+@media all and (max-width: 380px) {
+
+    html,body {
+        font-size: 12px;
+    }
+
+    #main {
+        .new-todo-wrapper {
+            line-height: 4rem;
+            // Input 输入框 large
+            .ivu-input.ivu-input-large {
+                height: 4rem;
+            }
+        }
+        .tag-list {
+            height: 11rem;
+        }
+    }
+    
+}

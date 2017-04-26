@@ -3,11 +3,12 @@
     <div class="circle-wrapper" :class="statusClass[timerStatus]">
         <i-circle
             :size="250"
-            :trail-width="4"
-            :stroke-width="5"
-            :percent="70"
-            stroke-linecap="square"
-            stroke-color="#43a3fb">
+            :trail-width="2"
+            :stroke-width="2"
+            :percent="circlePercent"
+            stroke-linecap="round"
+            stroke-color="#ff9292"
+            trail-color="rgb(250, 233, 231)">
             <div class="timer-circle">
                 <div class="title">
                     <h2>{{timerTodo.title}}</h2>
@@ -23,7 +24,7 @@
                 </div>
             </div>
         </i-circle>
-        <Button class="done-btn" @click="doneTodo" :disabled="doneDisable" shape="circle" icon="android-done"></Button>
+        <Button v-show="timerTodo.access" class="done-btn" @click="doneTodo" :disabled="doneDisable" shape="circle" icon="android-done"></Button>
     </div>
 </div>
 </template>
@@ -31,6 +32,8 @@
 <script>
 import bus from '../../common/event-bus';
 import moment from 'moment';
+
+// const 
 
 export default {
     props: {
@@ -51,6 +54,11 @@ export default {
             seconds: 0,
             minutes: 0,
             hours: 0,
+            clockMS: 0,
+            // 一圈的时间：25分钟 = 1500000毫秒
+            circleSumMS: 1500000,
+            fullCircleNum: 0,
+            originTitle: window.document.title           
         }
     },
     computed: {
@@ -58,20 +66,31 @@ export default {
             let timerTodo = {
                 status: 3,
                 title: '-',
+                tagID: 0,
                 elapsedMS: 0,
                 access: false,
-                paused: false
+                paused: false,
+                done: 0
             };
             // 如果有传入Todos，则覆盖默认值
             if(!(this.todo === null)) {
-                this.timerStatus = this.todo.status;
-                // this.changeTimerStatus(parseInt(this.todo.status));
-                timerTodo.id = this.todo.id;
-                timerTodo.title = this.todo.title;
-                timerTodo.elapsedMS = this.todo.elapsed_ms;
-                timerTodo.startTime = this.todo.start_time;
-                timerTodo.access = true;
+                if(this.todo.done !== 1) {
+                    this.timerStatus = this.todo.status;
+                    // this.changeTimerStatus(parseInt(this.todo.status));
+                    timerTodo.id = this.todo.id;
+                    timerTodo.title = this.todo.title;
+                    timerTodo.tagID = this.todo.tagID;
+                    timerTodo.elapsedMS = this.todo.elapsed_ms||0;
+                    timerTodo.startTime = this.todo.start_time;
+                    timerTodo.access = true;
+                    timerTodo.tagTodo = this.todo.tagTodo;
+                    
+                    this.clockMS = timerTodo.elapsedMS;
+                }else {
+                    this.resetTimer();
+                }
             }
+            console.log('computed timer');
             return timerTodo;
         },
         iconType() {
@@ -79,6 +98,24 @@ export default {
                 return 'ios-pause-outline'
             }
             return 'ios-play-outline';
+        },
+        circlePercent() {
+            let timerTodo = this.timerTodo;
+            let access = timerTodo.access;
+            let per = 0;
+            if(access) {
+                let elapsedMS = this.clockMS;
+                let fullCircleNum = 0;
+                let num = elapsedMS / this.circleSumMS;
+                fullCircleNum = Math.floor(num);
+                this.fullCircleNum = fullCircleNum;
+                let temp = (num - fullCircleNum) * 100;
+                per = (temp).toFixed(1);
+                if(per > 0 && temp < 0.1){
+                    per = 0.1;
+                }
+            }
+            return parseFloat(per);
         }
     },
     watch: {
@@ -95,12 +132,6 @@ export default {
         },
         // todo变化，修改clock数据
         todo() {
-            // setClockStr(elapsedMS) {
-            //     let elapsedMoment = moment.duration(elapsedMS);
-            //     this.secondsStr = this.towDigit(elapsedMoment.seconds());
-            //     this.minutesStr = this.towDigit(elapsedMoment.minutes());
-            //     this.hoursStr = this.towDigit(elapsedMoment.hours());
-            // },
             this.setClockStr(this.getElapsedTime(true));
         }
     },
@@ -111,16 +142,51 @@ export default {
         }
     },
     methods: {
-        doneTodo(){},
-        toggleStatus() {
+        // 在timer里完成todo
+        doneTodo(){
             if(this.timerTodo.access) {
-                if(this.timerStatus === 1) {
-                    this.pauseTodo();
-                    console.log(1);
-                }else {
-                    this.startTodo();
-                    console.log(2);
+                let data = {
+                    userID: 1,
+                    todoID: this.timerTodo.id
+                };
+                this.$http.post('/api/todos/done',data).then((res) => {
+                    if(res.ok) {
+                        this.timerTodo.done = true;
+                        this.todo.done = 1;
+                        this.resetTimer();
+                        this.timerTodo = null;
+                        console.log(this.timerTodo);
+                    }else {
+                        alert("todo完成失败");
+                    }
+                });
+            }
+        },
+        toggleStatus() {
+            let _this = this;
+            console.log(this.timerTodo);
+            // 非tagTodo的普通情况
+            if(!this.timerTodo.tagTodo) {
+                // 需要确认access
+                if(this.timerTodo.access) {
+                    if(this.timerStatus === 1) {
+                        this.pauseTodo();
+                        console.log(1);
+                    }else {
+                        this.startTodo();
+                        console.log(2);
+                    }
                 }
+            // tagTodo的情况
+            } else {
+                console.log('toggle tagTodo');
+                // 通知服务器新建一个Todo,并使用为当前且开始计时
+                this.$emit('startTagTodo',this.timerTodo);
+                // 收到Main创建成功，便开始运行当前timerTodo
+                bus.$on('permitStartTagTodo', () => {
+                    console.log('permitted, startTodo');
+                    _this.startTodo();
+                });
             }
         },
         getElapsedTime(justElapsed) {
@@ -165,10 +231,13 @@ export default {
                 this.secondsStr = this.towDigit(moment.seconds());
                 this.minutesStr = this.towDigit(moment.minutes());
                 this.hoursStr = this.towDigit(moment.hours());
+                this.clockMS = moment.asMilliseconds();
                 if(!callbacked) {
                     callback&&callback();
                     callbacked = true;
                 }
+                // 设置文档document
+                this.setDocumentTitle(this.hoursStr,this.minutesStr,this.secondsStr,this.timerTodo.title);
             }, 200);
         },
         // todo开启计时（数据库操作）
@@ -178,6 +247,7 @@ export default {
                 userID: 1,
                 todoID: this.timerTodo.id
             };
+            console.log(data);
             this.$http.post('/api/todos/start',data).then((res) => {
                 if(res.ok) {
                     console.log(this.timerStatus);
@@ -185,6 +255,7 @@ export default {
                         // 开始计时后，再修改status
                         _this.changeTimerStatus(1);
                     });
+                    this.timerTodo.tagTodo = false;
                     // 通过watch调用this.startClock
                     // this.timerStatus = 1;
                 }else {
@@ -207,6 +278,7 @@ export default {
                     this.timerTodo.startTime = Date.now();
                     // 暂停后，当前这个todo的elapsedMS需要更新
                     this.timerTodo.elapsedMS = res.body.elapsed_ms;
+                    this.todo.elapsed_ms = res.body.elapsed_ms;
                     // 标记这个todo被暂停过
                     this.timerTodo.paused = true;
                     // 将暂停后的结果elapsedMS设置到Clock上
@@ -231,8 +303,22 @@ export default {
         changeTimerStatus(status) {
             status = parseInt(status);
             this.timerStatus = status;
+            this.timerTodo.status = status;
             this.$emit('statusChange', status);
             console.log('timer.status:'+this.timerStatus);
+        },
+        resetTimer() {
+            this.setClockStr(0);
+        },
+        setDocumentTitle(h, m, s, title) {
+            // 设置title
+            let hoursStr = (parseInt(h)>1) ? h+':' : '';
+            if(document.hidden) {
+                window.document.title = hoursStr+m+':'+s+'-'+title+'-'+this.originTitle;
+            } else {
+                if(!(window.document.title == this.originTitle))
+                    window.document.title = this.originTitle;
+            }
         }
     },
     created() {
@@ -245,11 +331,11 @@ export default {
 .timer {
     .title {
         h2 {
-            font-size: 1rem;
+            font-size: 18px;
             font-weight: 400;
-            height: 1rem;
+            height: 18px;
             overflow: hidden;
-            width: 11rem;
+            width: 200px;
             margin: 0rem auto 0 auto;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -265,6 +351,14 @@ export default {
             position: absolute;
             left: 0;
             top: 0;
+            background: #fff;
+            border-color: #bbb;
+            color: #bbb;
+            &:hover {
+                border-color: #a5cba6;
+                color: #a5cba6;
+                background: #effff3;
+            }
         }
         
         @at-root .circle-wrapper.ticking {
@@ -273,12 +367,14 @@ export default {
     }
 }
 .timer-circle {
+    color: #ffa6a0;
     .clock {
         font-size: 0px;
         font-weight: 300;
-        margin: 0.6rem auto;
+        margin: 0.6rem auto 0 auto;
         span {
-            font-size: 4rem;
+            // font-size: 4rem;
+            font-size: 64px;
         }
         .hours {
             font-size: 1.4rem;
@@ -289,9 +385,24 @@ export default {
         font-size: 2rem;
         font-weight: 300;
         word-wrap: nowrap;
+        color: #888;
     }
     .icon-wrapper {
-        margin-bottom: -2rem;
+        margin-bottom: -40px;
+        font-size: 80px;
+        height: 80px;
+        line-height: 80px;
+        transition: all .2s;
+
+        i.ivu-icon {
+            font-size: inherit !important;
+            line-height: inherit !important;
+        }
+
+        &:hover {
+            font-size: 90px;
+            line-height: 60px;
+        }
     }
 }
 </style>
